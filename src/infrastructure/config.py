@@ -46,6 +46,9 @@ class Settings(BaseSettings):
     SHORTENER_USER: Optional[str] = Field(default=None, env="SHORTENER_USER")
     SHORTENER_PASSWORD: Optional[str] = Field(default=None, env="SHORTENER_PASSWORD")
 
+    # Mongo
+    MONGO_TLS: bool = Field(True, env="MONGO_TLS")
+
     # Cadastro
     CADASTRO_BASE_URL: str = Field("https://samplemachine.ngrok.app/api/sample/welcome", env="CADASTRO_BASE_URL")
 

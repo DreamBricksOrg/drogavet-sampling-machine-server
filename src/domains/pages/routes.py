@@ -17,14 +17,14 @@ async def health():
 
 @router.get("/", response_class=HTMLResponse, include_in_schema=False)
 async def page_home(request: Request):
-    return templates.TemplateResponse("admin/login.html", {"request": request})
+    return templates.TemplateResponse(request, "admin/login.html")
 
 
 @router.get("/user", include_in_schema=False)
 async def page_user(request: Request):
-    return templates.TemplateResponse("admin/user.html", {"request": request})
+    return templates.TemplateResponse(request, "admin/user.html")
 
 
 @router.get("/admin", include_in_schema=False)
 async def page_admin(request: Request):
-    return templates.TemplateResponse("admin/admin.html", {"request": request})
+    return templates.TemplateResponse(request, "admin/admin.html")

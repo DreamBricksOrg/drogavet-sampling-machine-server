@@ -23,7 +23,6 @@ if settings.USE_FORM:
     from domains.auth.routes import router as auth_router
     from domains.admin.routes import router as admin_router
 
-from middlewares.replay_guard import ReplayGuardMiddleware
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -106,8 +105,6 @@ def create_app() -> FastAPI:
     if settings.SENTRY_DSN and SENTRY_AVAILABLE:
         sentry_sdk.init(dsn=settings.SENTRY_DSN, traces_sample_rate=0.2)
         app.add_middleware(SentryAsgiMiddleware)
-
-    app.add_middleware(ReplayGuardMiddleware, ttl_seconds=4)
 
     app.mount("/src/static", StaticFiles(directory="src/static"), name="src-static")
     app.mount("/static", StaticFiles(directory="src/static"), name="static")

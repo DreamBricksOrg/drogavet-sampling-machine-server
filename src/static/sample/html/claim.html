@@ -45,14 +45,25 @@
             } catch (_) {}
         }
 
-        // Fluxo QR estático: agenda o ciclo no servidor e acompanha por polling
-        async function startPickupAndPoll(sessionId, slug) {
-            const res = await fetch('/api/sample/session/pickup', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ session_id: sessionId, slug }),
-            });
-            if (!res.ok) throw new Error(`pickup ${res.status}`);
+        // Fluxo QR estático: agenda o ciclo no servidor e acompanha por polling.
+        // Em refresh da página, retoma do status atual sem repetir o POST.
+        async function startPickupAndPoll(sessionId, slug, currentStatus) {
+            if (currentStatus === 'completed') {
+                window.location.href = '/api/sample/thanks';
+                return;
+            }
+            if (currentStatus === 'failed' || currentStatus === 'aborted') {
+                goToError();
+                return;
+            }
+            if (currentStatus !== 'processing') {
+                const res = await fetch('/api/sample/session/pickup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_id: sessionId, slug }),
+                });
+                if (!res.ok) throw new Error(`pickup ${res.status}`);
+            }
 
             const started = Date.now();
             while (Date.now() - started < POLL_MAX_MS) {
@@ -78,7 +89,7 @@
             try {
                 const session = await fetchSession(sessionId);
                 if (session.mode === 'qrcode_static') {
-                    await startPickupAndPoll(sessionId, slug);
+                    await startPickupAndPoll(sessionId, slug, session.status);
                 } else {
                     await completeSession(sessionId, slug);
                 }

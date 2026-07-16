@@ -21,6 +21,13 @@ class FakeSessionRepository:
         doc = self.docs.get(session_id)
         return dict(doc) if doc else None
 
+    async def try_mark_form_opened(self, session_id, now):
+        doc = self.docs.get(session_id)
+        if not doc or doc["status"] != "pending" or doc.get("retire_sent"):
+            return None
+        doc.update(retire_sent=True, status="form_shown", form_opened_at=now)
+        return dict(doc)
+
     async def try_start_processing(self, session_id, slug, now):
         doc = self.docs.get(session_id)
         if not doc or doc["slug"] != slug or doc["status"] != "form_shown" or doc.get("processing"):

@@ -128,12 +128,12 @@ async def html_form(request: Request):
         raise HTTPException(400, "sid ausente")
     try:
         template_name = await SessionService().open_form(sid)
-        return templates.TemplateResponse(template_name, {"request": request})
+        return templates.TemplateResponse(request, template_name)
     except HTTPException:
         raise
     except Exception as exc:
         log.error("html-render-failed", error=str(exc), page="form")
-        return templates.TemplateResponse("error.html", {"request": request})
+        return templates.TemplateResponse(request, "error.html")
 
 
 @session_router.get("/terms", response_class=HTMLResponse)
@@ -147,7 +147,7 @@ def _render_logged_page(request: Request, template_name: str, event: str, page: 
     log = structlog.get_logger()
     try:
         LogSender().log(event)
-        return templates.TemplateResponse(template_name, {"request": request})
+        return templates.TemplateResponse(request, template_name)
     except Exception as exc:
         log.error("html-render-failed", error=str(exc), page=page)
-        return templates.TemplateResponse("error.html", {"request": request})
+        return templates.TemplateResponse(request, "error.html")

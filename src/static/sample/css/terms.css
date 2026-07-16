@@ -1,5 +1,6 @@
 * {
-    font-family: 'HDColton-XWideLight' !important;
+    font-family: 'Norpeth' !important;
+    font-weight: 300;
 }
 
 .container {
@@ -31,7 +32,8 @@
 }
 
 .button-container button {
-    font-family: 'HDColton-XWideMedium';
+    font-family: 'Norpeth';
+    font-weight: 700;
     letter-spacing: 0.2rem;
     padding: 10px 30px;
     font-size: 0.8rem;
@@ -89,7 +91,8 @@
 
 
 .terms-content p {
-    font-family: 'HDColton-XWideSemiBold';
+    font-family: 'Norpeth';
+    font-weight: 600;
     font-size: 10px;
     text-transform: uppercase;
     color: #FDBB17;
@@ -100,7 +103,8 @@
     display: flex;
     align-items: center;
     margin-top: 20px;
-    font-family: 'HDColton-XWideLight';
+    font-family: 'Norpeth';
+    font-weight: 300;
     font-size: 12px;
     text-transform: uppercase;
     color: #FDBB17;
@@ -146,7 +150,8 @@
 
 .after-terms-text {
     margin-top: 15px;
-    font-family: 'HDColton-XWideSemiBold';
+    font-family: 'Norpeth';
+    font-weight: 600;
     font-size: 10px;
     color: #FDBB17;
     text-align: center;

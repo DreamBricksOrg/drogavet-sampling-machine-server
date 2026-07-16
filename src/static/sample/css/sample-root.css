@@ -4,20 +4,40 @@
     box-sizing: border-box;
 }
 
-
 @font-face {
-    font-family: 'HDColton-XWideLight';
-    src: url('../assets/fonts/hd-colton/HDColton-XWideLight.otf') format('opentype');
+    font-family: 'Norpeth';
+    src: url('../assets/fonts/fonte/Norpeth Light_v2.otf') format('opentype');
+    font-weight: 300;
 }
 
 @font-face {
-    font-family: 'HDColton-XWideSemiBold';
-    src: url('../assets/fonts/hd-colton/HDColton-XWideSemibold.otf') format('opentype');
+    font-family: 'Norpeth';
+    src: url('../assets/fonts/fonte/Norpeth Book_v2.otf') format('opentype');
+    font-weight: 400;
 }
 
 @font-face {
-    font-family: 'HDColton-XWideMedium';
-    src: url('../assets/fonts/hd-colton/HDColton-XWideMedium.otf');
+    font-family: 'Norpeth';
+    src: url('../assets/fonts/fonte/Norpeth Medium_v2.otf') format('opentype');
+    font-weight: 500;
+}
+
+@font-face {
+    font-family: 'Norpeth';
+    src: url('../assets/fonts/fonte/The Northern Block Ltd - Norpeth DemiBold.otf') format('opentype');
+    font-weight: 600;
+}
+
+@font-face {
+    font-family: 'Norpeth';
+    src: url('../assets/fonts/fonte/Norpeth Bold_v2.otf') format('opentype');
+    font-weight: 700;
+}
+
+@font-face {
+    font-family: 'Norpeth';
+    src: url('../assets/fonts/fonte/Norpeth Black_v2.otf') format('opentype');
+    font-weight: 900;
 }
 
 

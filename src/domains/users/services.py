@@ -134,11 +134,10 @@ class SessionService:
             log.info("form-opened-first-time", session_id=sid)
             LogSender().log("form_page_accessed")
             get_udp_sender().send("next")
-            return "form.html"
-
-        session = await self.sessions.find(sid)
-        LogSender().log("form_used_or_invalid", status=session.get("status") if session else None)
-        return "used.html"
+        else:
+            # refresh com status form_shown: reexibe o form sem reenviar UDP
+            log.info("form-reopened", session_id=sid, status=session["status"])
+        return "form.html"
 
     async def init_static_session(self) -> dict:
         session_id = str(uuid.uuid4())

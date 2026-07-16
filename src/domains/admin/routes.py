@@ -69,7 +69,7 @@ async def delete_user(user_id: str = Path(..., description="ID do Usuário a ser
 async def html_admin_inventory(request: Request):
     try:
         LogSender().log("admin_page_accessed")
-        return templates.TemplateResponse("admin.html", {"request": request})
+        return templates.TemplateResponse(request, "admin.html")
     except Exception as exc:
         log.error("html-render-failed", error=str(exc), page="admin")
-        return templates.TemplateResponse("error.html", {"request": request})
+        return templates.TemplateResponse(request, "error.html")
