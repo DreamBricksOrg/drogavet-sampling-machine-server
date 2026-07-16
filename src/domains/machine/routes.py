@@ -112,6 +112,19 @@ async def admin_dispense(request: Request):
         raise HTTPException(500, "Erro interno do servidor")
 
 
+@router.post("/admin/serial/inject", dependencies=[Depends(_admin_auth)])
+async def admin_serial_inject(request: Request):
+    if not settings.SERIAL_FAKE:
+        raise HTTPException(400, "Disponível apenas com SERIAL_FAKE=true")
+    body = await request.json()
+    message = str(body.get("message", "")).strip()
+    if not message:
+        raise HTTPException(400, "Campo 'message' obrigatório")
+    from .services import get_serial_comm
+    get_serial_comm().inject(message)
+    return {"status": "injected", "message": message}
+
+
 @router.get("/admin/inventory")
 async def get_inventory():
     try:

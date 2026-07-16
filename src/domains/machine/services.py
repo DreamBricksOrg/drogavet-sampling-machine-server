@@ -29,7 +29,11 @@ def get_udp_sender() -> UDPSender:
 def get_serial_comm() -> SerialComm:
     global _serial_comm
     if _serial_comm is None:
-        _serial_comm = SerialComm(port=settings.SERIAL_PORT, baudrate=settings.SERIAL_BAUDRATE)
+        if settings.SERIAL_FAKE:
+            from infrastructure.hardware.serial_fake import FakeSerialComm
+            _serial_comm = FakeSerialComm()
+        else:
+            _serial_comm = SerialComm(port=settings.SERIAL_PORT, baudrate=settings.SERIAL_BAUDRATE)
     return _serial_comm
 
 

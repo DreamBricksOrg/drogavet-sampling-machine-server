@@ -38,6 +38,31 @@ background — nada depende do navegador ficar aberto.
 | Variável                 | Descrição                          | Padrão |
 |--------------------------|------------------------------------|--------|
 | `PICKUP_TIMEOUT_SECONDS` | Espera máxima pelo `"1"` do serial | `60`   |
+| `SERIAL_FAKE`            | Serial simulada (sem Arduino)      | `false`|
+
+## Testar sem Arduino (SERIAL_FAKE)
+
+1. No `.env`: `SERIAL_FAKE=true` — o servidor usa uma serial em memória
+   (`FakeSerialComm`) que confirma o `"on"` automaticamente.
+2. Percorra o fluxo normalmente até o claim.
+3. Simule a retirada injetando o `"1"` (auth básica do admin):
+
+   ```bash
+   curl -u <SAMPLE_ADMIN_USER>:<SAMPLE_ADMIN_PASSWORD> \
+     -X POST http://localhost:8000/api/sample/admin/serial/inject \
+     -H "Content-Type: application/json" -d '{"message": "1"}'
+   ```
+
+4. O navegador navega para o thanks e o inventário decrementa. Sem injetar
+   nada, o timeout de 60 s leva à tela de erro.
+
+O endpoint `/api/sample/admin/serial/inject` só funciona com
+`SERIAL_FAKE=true` (400 caso contrário). Também serve para o modo totem
+(`{"message": "dropped"}`, `hand_timeout`, `out_of_stock`).
+
+Alternativa com hardware simulado de verdade: par de portas virtuais
+(com0com) + `python scripts/arduino_sim.py COM9` — exige driver assinado
+aceito pelo Windows (Secure Boot pode bloquear, problema código 52).
 
 ## Observações
 

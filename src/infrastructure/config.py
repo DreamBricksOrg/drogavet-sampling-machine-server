@@ -52,6 +52,7 @@ class Settings(BaseSettings):
     # Serial
     SERIAL_PORT: str = Field("COM3", env="SERIAL_PORT")
     SERIAL_BAUDRATE: int = Field(9600, env="SERIAL_BAUDRATE")
+    SERIAL_FAKE: bool = Field(False, env="SERIAL_FAKE")
 
     # UDP
     UDP_PORT: int = Field(5004, env="UDP_PORT")
