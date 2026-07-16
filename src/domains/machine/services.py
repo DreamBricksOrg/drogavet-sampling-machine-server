@@ -153,6 +153,61 @@ class MachineService:
         udp_sender.send_with_confirmation("timeout")
         return "failed"
 
+    async def pickup_cycle(
+        self,
+        timeout_seconds: float | None = None,
+        on_timeout_seconds: float = 10,
+    ) -> str:
+        """Ciclo do modo QR estático: liga a máquina, espera o serial "1"
+        (produto retirado), desliga. Roda em task background — nunca preso
+        a request HTTP. "off" é enviado sempre, inclusive em erro/timeout."""
+        timeout = timeout_seconds if timeout_seconds is not None else settings.PICKUP_TIMEOUT_SECONDS
+        log_sender = LogSender()
+        async with serial_lock:
+            serial_comm = get_serial_comm()
+            try:
+                serial_comm.send("on")
+                start = time.time()
+                machine_on = False
+                picked_up = False
+                while time.time() - start < on_timeout_seconds:
+                    response = serial_comm.receive()
+                    if response == "on":
+                        machine_on = True
+                        break
+                    if response == "1":
+                        # "1" pode chegar antes da confirmação do "on" — não descartar
+                        picked_up = True
+                        break
+                    await asyncio.sleep(0.1)
+                if machine_on:
+                    log.info("pickup-machine-on")
+                elif not picked_up:
+                    log.warning("pickup-machine-on-timeout")
+
+                start = time.time()
+                while picked_up or time.time() - start < timeout:
+                    if picked_up or serial_comm.receive() == "1":
+                        await self.inventory.update_on_drop()
+                        log_sender.log("pickup_dispensed", status="SUCCESS", tags=["pickup", "drop", "success", "server"])
+                        log.info("pickup-dispensed")
+                        return "completed"
+                    await asyncio.sleep(0.1)
+
+                log_sender.log("pickup_timeout", status="ERROR", tags=["pickup", "drop", "timeout", "server"])
+                log.error("pickup-timeout")
+                return "failed"
+            except Exception as exc:
+                log_sender.log("pickup_error", additional=str(exc), status="ERROR", tags=["pickup", "drop", "error", "server"])
+                log.error("pickup-cycle-error", error=str(exc))
+                return "failed"
+            finally:
+                try:
+                    serial_comm.send("off")
+                    log.info("pickup-machine-off")
+                except Exception as off_exc:
+                    log.error("pickup-off-failed", error=str(off_exc))
+
     async def admin_dispense(self, message: str) -> dict:
         async with serial_lock:
             get_serial_comm().send(message)
