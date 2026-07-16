@@ -21,11 +21,21 @@
     </div>
 
     <script>
-        async function completeSession() {
-            const sessionId = localStorage.getItem('session_id');
-            const slug = localStorage.getItem('slug');
-            if (!sessionId || !slug) return;
+        const POLL_INTERVAL_MS = 2000;
+        const POLL_MAX_MS = 90000;
 
+        function goToError() {
+            window.location.href = '/templates/sample/html/error.html';
+        }
+
+        async function fetchSession(sessionId) {
+            const res = await fetch(`/api/sample/session/${sessionId}`);
+            if (!res.ok) throw new Error(`session fetch ${res.status}`);
+            return res.json();
+        }
+
+        // Fluxo atual (totem/Unity): dispara o drop e o Unity cuida do resto
+        async function completeSession(sessionId, slug) {
             try {
                 await fetch('/api/sample/session/complete', {
                     method: 'POST',
@@ -35,7 +45,49 @@
             } catch (_) {}
         }
 
-        document.addEventListener('DOMContentLoaded', completeSession);
+        // Fluxo QR estático: agenda o ciclo no servidor e acompanha por polling
+        async function startPickupAndPoll(sessionId, slug) {
+            const res = await fetch('/api/sample/session/pickup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ session_id: sessionId, slug }),
+            });
+            if (!res.ok) throw new Error(`pickup ${res.status}`);
+
+            const started = Date.now();
+            while (Date.now() - started < POLL_MAX_MS) {
+                await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS));
+                const session = await fetchSession(sessionId);
+                if (session.status === 'completed') {
+                    window.location.href = '/api/sample/thanks';
+                    return;
+                }
+                if (session.status === 'failed' || session.status === 'aborted') {
+                    goToError();
+                    return;
+                }
+            }
+            goToError();
+        }
+
+        async function init() {
+            const sessionId = localStorage.getItem('session_id');
+            const slug = localStorage.getItem('slug');
+            if (!sessionId || !slug) return;
+
+            try {
+                const session = await fetchSession(sessionId);
+                if (session.mode === 'qrcode_static') {
+                    await startPickupAndPoll(sessionId, slug);
+                } else {
+                    await completeSession(sessionId, slug);
+                }
+            } catch (_) {
+                goToError();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 
