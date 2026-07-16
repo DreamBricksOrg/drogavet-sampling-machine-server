@@ -17,6 +17,16 @@ class SessionCompleteResponse(BaseModel):
     session_id: str
 
 
+class SessionPickupRequest(BaseModel):
+    session_id: str
+    slug: str
+
+
+class SessionPickupResponse(BaseModel):
+    status: str
+    session_id: str
+
+
 class QRCodeInitResponse(BaseModel):
     session_id: str
     short_url: HttpUrl
@@ -29,6 +39,7 @@ class SessionGetResponse(BaseModel):
     session_id: str
     slug: str
     status: Literal["pending", "form_shown", "processing", "completed", "failed", "aborted"]
+    mode: Optional[str] = None
     short_url: Optional[AnyUrl] = None
     created_at: datetime
     form_opened_at: Optional[datetime] = None
