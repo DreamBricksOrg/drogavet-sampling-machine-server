@@ -3,7 +3,7 @@ from typing import List
 
 from fastapi import APIRouter, Body, HTTPException, Query, Request
 from pydantic import EmailStr
-from starlette.responses import HTMLResponse
+from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.templating import Jinja2Templates
 
 from integrations.logcenter.log_sender import LogSender
@@ -12,6 +12,8 @@ from .schemas import (
     SessionCompleteRequest,
     SessionCompleteResponse,
     SessionGetResponse,
+    SessionPickupRequest,
+    SessionPickupResponse,
     UserGetResponse,
     UserInitRequest,
     UserInitResponse,
@@ -81,6 +83,25 @@ async def complete_session(payload: SessionCompleteRequest):
 @session_router.post("/qrcode/init", response_model=QRCodeInitResponse)
 async def init_qrcode():
     return await SessionService().init_qrcode()
+
+
+@session_router.get("/start")
+async def start_static_session():
+    doc = await SessionService().init_static_session()
+    return RedirectResponse(
+        url=f"/api/sample/terms?sid={doc['_id']}&slug={doc['slug']}",
+        status_code=302,
+    )
+
+
+@session_router.post("/session/pickup", response_model=SessionPickupResponse)
+async def start_pickup(payload: SessionPickupRequest):
+    return await SessionService().start_pickup(payload)
+
+
+@session_router.get("/thanks", response_class=HTMLResponse)
+async def html_thanks(request: Request):
+    return _render_logged_page(request, "thanks.html", "thanks_page_accessed", "thanks")
 
 
 @session_router.get("/session/{sid}", response_model=SessionGetResponse)
