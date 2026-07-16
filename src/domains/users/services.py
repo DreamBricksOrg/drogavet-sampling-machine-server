@@ -1,3 +1,5 @@
+import asyncio
+import secrets
 import uuid
 from datetime import date, datetime, time, timedelta, timezone
 
@@ -15,6 +17,8 @@ from .schemas import (
     SessionCompleteRequest,
     SessionCompleteResponse,
     SessionGetResponse,
+    SessionPickupRequest,
+    SessionPickupResponse,
     UserGetResponse,
     UserInitRequest,
     UserInitResponse,
@@ -82,6 +86,7 @@ class SessionService:
             session_id=session["_id"],
             slug=session["slug"],
             status=session["status"],
+            mode=session.get("mode"),
             short_url=session.get("short_url"),
             created_at=session.get("created_at"),
             form_opened_at=session.get("form_opened_at"),
@@ -134,6 +139,51 @@ class SessionService:
         session = await self.sessions.find(sid)
         LogSender().log("form_used_or_invalid", status=session.get("status") if session else None)
         return "used.html"
+
+    async def init_static_session(self) -> dict:
+        session_id = str(uuid.uuid4())
+        doc = {
+            "_id": session_id,
+            "slug": secrets.token_urlsafe(6),
+            "short_url": None,
+            "mode": "qrcode_static",
+            "status": "pending",
+            "retire_sent": False,
+            "processing": False,
+            "created_at": now_utc(),
+            "form_opened_at": None,
+            "processing_started_at": None,
+            "completed_at": None,
+        }
+        await self.sessions.create(doc)
+        log.info("static-session-created", session_id=session_id)
+        return doc
+
+    async def start_pickup(self, req: SessionPickupRequest) -> SessionPickupResponse:
+        doc = await self.sessions.try_start_processing(req.session_id, req.slug, now_utc())
+        if not doc:
+            session = await self.sessions.find(req.session_id)
+            if not session:
+                raise HTTPException(404, "Sessão inválida ou expirada")
+            if session.get("slug") != req.slug:
+                raise HTTPException(400, "Slug não corresponde à sessão")
+            raise HTTPException(409, "Sessão já encerrada ou em processamento")
+
+        LogSender().log("pickup_started")
+        asyncio.create_task(self._run_pickup(req.session_id))
+        return SessionPickupResponse(status="processing", session_id=req.session_id)
+
+    async def _run_pickup(self, session_id: str) -> None:
+        from domains.machine.services import MachineService
+
+        status_final = "failed"
+        try:
+            status_final = await MachineService().pickup_cycle()
+        except Exception as exc:
+            log.error("pickup-task-error", error=str(exc), session_id=session_id)
+        finally:
+            await self.sessions.finalize(session_id, status_final, now_utc())
+            log.info("session-finalized", session_id=session_id, status=status_final)
 
 
 def start_of_day_utc(value) -> datetime:
