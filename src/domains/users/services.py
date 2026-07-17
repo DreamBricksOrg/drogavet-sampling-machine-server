@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 import secrets
 import uuid
 from datetime import date, datetime, time, timedelta, timezone
@@ -185,6 +186,16 @@ class SessionService:
             log.info("session-finalized", session_id=session_id, status=status_final)
 
 
+def email_hash(email: str) -> str:
+    return hashlib.sha256(str(email).strip().lower().encode()).hexdigest()
+
+
+def as_utc(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value
+
+
 def start_of_day_utc(value) -> datetime:
     if not value:
         value = now_utc()
@@ -230,29 +241,76 @@ class UserService:
         except Exception as exc:
             log.warning("ensure-unique-email-index-failed", error=str(exc))
 
+        now = now_utc()
+        email_lower = str(payload.email).lower()
+        ehash = email_hash(email_lower)
+        cooldown = timedelta(hours=settings.PICKUP_COOLDOWN_HOURS)
+
+        existing = await repo.find_one({"$or": [{"emailHash": ehash}, {"email": email_lower}]})
+        if existing:
+            last_pick = existing.get("lastPick")
+            if last_pick:
+                can_pick_at = as_utc(last_pick) + cooldown
+                if now < can_pick_at:
+                    log.warning(
+                        "pickup-cooldown-active",
+                        id=existing["_id"],
+                        last_pick=str(last_pick),
+                        can_pick_at=str(can_pick_at),
+                        collection=repo.collection_name,
+                    )
+                    raise HTTPException(
+                        status_code=429,
+                        detail=f"Aguarde até {can_pick_at.isoformat()} para retirar novamente",
+                    )
+
+            updated = await repo.add_pick(
+                {"_id": existing["_id"]},
+                now,
+                {
+                    "name": payload.name,
+                    "phone": payload.phone,
+                    "emailHash": ehash,
+                    "lastPick": now,
+                    "canPickFrom": now + cooldown,
+                    "updatedAt": now,
+                },
+            )
+            log.info("user-repick", id=existing["_id"], collection=repo.collection_name)
+            return UserInitResponse(
+                id=updated["_id"],
+                name=updated["name"],
+                email=updated["email"],
+                status=updated.get("status", "registered"),
+                registerDay=updated["registerDay"],
+                canPickFrom=updated["canPickFrom"],
+            )
+
         reg_id = str(uuid.uuid4())
-        today = now_utc()
-        register_day = payload.registerDay or today
+        register_day = payload.registerDay or now
         doc = {
             "_id": reg_id,
             "code": payload.code,
             "name": payload.name,
-            "email": str(payload.email).lower(),
+            "email": email_lower,
+            "emailHash": ehash,
             "phone": payload.phone,
             "registerDay": register_day,
-            "canPickFrom": register_day,
+            "canPickFrom": now + cooldown,
             "status": "registered",
-            "createdAt": today,
-            "updatedAt": today,
+            "createdAt": now,
+            "updatedAt": now,
             "pickedDay": None,
             "productsPicked": 0,
+            "pickHistory": [now],
+            "lastPick": now,
         }
 
         try:
             await repo.create(doc)
         except DuplicateKeyError:
-            log.warning("email-already-exists", email=payload.email, collection=repo.collection_name)
-            raise HTTPException(status_code=409, detail="E-mail já cadastrado")
+            log.warning("email-race-duplicate", email=payload.email, collection=repo.collection_name)
+            raise HTTPException(status_code=429, detail="Cadastro em andamento, tente novamente")
 
         log.info("user-created", id=reg_id, collection=repo.collection_name)
         return UserInitResponse(

@@ -68,6 +68,7 @@ class Settings(BaseSettings):
     # Machine
     DROP_CODE: str = Field(..., env="DROP_CODE")
     PICKUP_TIMEOUT_SECONDS: int = Field(60, env="PICKUP_TIMEOUT_SECONDS")
+    PICKUP_COOLDOWN_HOURS: float = Field(12, env="PICKUP_COOLDOWN_HOURS")
 
     @model_validator(mode="after")
     def check_form_deps(self) -> "Settings":

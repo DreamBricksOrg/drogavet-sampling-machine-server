@@ -81,6 +81,13 @@ class UserRepository:
         result = await self.collection.delete_one({"_id": user_id})
         return result.deleted_count
 
+    async def add_pick(self, query: dict, pick_at, fields: dict) -> dict | None:
+        return await self.collection.find_one_and_update(
+            query,
+            {"$push": {"pickHistory": pick_at}, "$set": fields},
+            return_document=ReturnDocument.AFTER,
+        )
+
     async def register_pickup(self, query: dict, day_dt, qty: int, next_can_pick_dt, updated_at) -> int:
         result = await self.collection.update_one(
             {

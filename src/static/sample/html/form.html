@@ -228,8 +228,10 @@
             try {
                 const res = await tryCreateUser(payload);
 
-                if (res.ok || res.status === 409) {
+                if (res.ok) {
                     redirectToClaim();
+                } else if (res.status === 429) {
+                    window.location.href = '/templates/sample/html/error.html';
                 } else {
                     const msg = (res.data && (res.data.detail || res.data.message)) || 'Erro ao cadastrar';
                     await Swal.fire({ icon: 'error', title: 'Erro', text: msg, confirmButtonText: 'OK' });
