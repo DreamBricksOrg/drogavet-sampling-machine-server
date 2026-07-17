@@ -3,7 +3,7 @@
     min-height: 100vh;
     background-color: #122948;
     position: relative;
-    padding: 0 1rem;
+    padding: 0 2rem;
 }
 
 .content {
@@ -18,6 +18,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    margin-top: 1rem;
 }
 
 .header img {
@@ -26,10 +27,10 @@
 }
 
 .header-foguete {
-    width: 100%;
-    height: 2rem;
-    display: flex;
-    justify-content: flex-end;
+    height: 2.5rem;
+    position: absolute;
+    top: -50px;
+    right: -30px;
 }
 
 .header-foguete img {
@@ -38,9 +39,10 @@
 }
 
 .header-raio {
-    width: 100%;
-    height: 2rem;
-    justify-content: flex-start;
+    height: 2.5rem;
+    position: absolute;
+    bottom: -20px;
+    left: -20px;
 }
 
 .header-raio img {
@@ -49,33 +51,54 @@
 }
 
 .title {
-    font-family: 'Norpeth';
-    font-weight: 700;
+    font-family: 'Norpeth-Black';
     color: #fff;
-    text-align: center;
-    font-size: 0.6rem;
-    letter-spacing: 0.2rem;
     margin-top: 20px;
+    width: 100%;
+    position: relative;
+    margin-top: 3rem;
 }
 
-@media (min-height: 720px) {
-    .title {
-        margin-top: 40px;
-    }
+.title h1,
+.title h2 {
+    width: 100%;
+    margin: 0;
+    text-align: justify;
+    text-align-last: justify;
+    white-space: nowrap;
 }
+
+.title h1 {
+    font-size: clamp(2.6rem, 6vw, 2.8rem);
+}
+
+.title h2 {
+    font-size: clamp(1.5rem, 6vw, 1.7rem);
+}
+
+.description {
+    font-family: 'Norpeth-Medium';
+    color: #fff;
+    width: 100%;
+    text-align: center;
+}
+
+.description p{
+    font-size: clamp(1rem, 6vw, 1.2rem);
+    margin: 0;
+    margin-top: 10px;
+    word-spacing: 0.3rem;
+}
+
+
 
 form {
-    margin-top: 20px;
+    margin-top: 3rem;
     width: 100%;
     border-radius: 10px;
     background-color: #E6E6E6;
 }
 
-@media (min-height: 720px) {
-    form {
-        margin-top: 40px;
-    }
-}
 
 .form-content {
     display: flex;
@@ -129,12 +152,7 @@ form {
     margin: 20px;
 }
 
-@media (min-height: 720px) {
-    .image-container {
-        margin-top: 30px;
-        margin: 40px;
-    }
-}
+
 
 .image-container img {
     object-fit: contain;
@@ -149,11 +167,6 @@ form {
     align-items: center;
 }
 
-@media (min-height: 720px) {
-    .button-container {
-        margin-top: 30px;
-    }
-}
 
 .button-container button {
     font-family: 'Norpeth';
