@@ -70,7 +70,7 @@
     </div>
 
     <script>
-        const COLLECTION = 'machine';
+        const COLLECTION = 'registrations';
 
         function getUrlParameter(name) {
             return new URLSearchParams(window.location.search).get(name);
@@ -79,10 +79,10 @@
         function saveSessionData() {
             const sessionId = getUrlParameter('sid');
             const slug = getUrlParameter('slug');
-            if (sessionId && !localStorage.getItem('session_id')) {
+            if (sessionId) {
                 localStorage.setItem('session_id', sessionId);
             }
-            if (slug && !localStorage.getItem('slug')) {
+            if (slug) {
                 localStorage.setItem('slug', slug);
             }
         }
@@ -206,17 +206,6 @@
             return { ok: res.ok, status: res.status, data };
         }
 
-        async function tryRegisterPickup(email) {
-            const today = new Date().toISOString().split('T')[0];
-            const res = await fetch(`/api/users/pickup/?collection=${COLLECTION}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, day: today, productsPicked: 1 }),
-            });
-            const data = await res.json().catch(() => ({}));
-            return { ok: res.ok, status: res.status, data };
-        }
-
         function redirectToClaim() {
             const queryString = new URLSearchParams(window.location.search).toString();
             window.location.href = queryString
@@ -239,7 +228,6 @@
                 const res = await tryCreateUser(payload);
 
                 if (res.ok || res.status === 409) {
-                    await tryRegisterPickup(payload.email);
                     redirectToClaim();
                 } else {
                     const msg = (res.data && (res.data.detail || res.data.message)) || 'Erro ao cadastrar';

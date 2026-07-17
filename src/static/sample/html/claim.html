@@ -11,18 +11,36 @@
 
 <body>
     <div class="container">
+        <div class="header">
+            <img src="/templates/sample/assets/images/DROGAVET_ASSETS_LANDING/TELA_01/HEADER.png">
+        </div>
 
-        <div class="text-content">
-            <p>RETIRE SUA</p>
-            <p>AMOSTRA</p>
-            <p>NO TOTEM AO LADO</p>
+        <div class="header-foguete">
+            <img src="/templates/sample/assets/images/DROGAVET_ASSETS_LANDING/TELA_01/FOGUETE.png" alt="Foguete">
+        </div>
+
+        <div class="header-raio">
+            <img src="/templates/sample/assets/images/DROGAVET_ASSETS_LANDING/TELA_01/RAIO.png" alt="Raio">
+        </div>
+        <div class="content">
+            <div class="description">
+                <img src="/templates/sample/assets/images/DROGAVET_ASSETS_LANDING/TELA_02/RETIRE_TEXTO.png"
+                    alt="Description">
+            </div>
+        </div>
+        <div class="footer">
+            <img src="/templates/sample/assets/images/DROGAVET_ASSETS_LANDING/TELA_01/FOOTER.png" alt="Footer">
         </div>
 
     </div>
 
     <script>
-        const POLL_INTERVAL_MS = 2000;
-        const POLL_MAX_MS = 90000;
+        // const POLL_INTERVAL_MS = 2000;
+        // const POLL_MAX_MS = 90000;
+
+        const POLL_INTERVAL_MS = 2000000;
+        const POLL_MAX_MS = 9000000000;
+
 
         function goToError() {
             window.location.href = '/templates/sample/html/error.html';
@@ -42,7 +60,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ session_id: sessionId, slug }),
                 });
-            } catch (_) {}
+            } catch (_) { }
         }
 
         // Fluxo QR estático: agenda o ciclo no servidor e acompanha por polling.

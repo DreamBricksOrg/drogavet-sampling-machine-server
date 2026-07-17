@@ -89,7 +89,7 @@ async def init_qrcode():
 async def start_static_session():
     doc = await SessionService().init_static_session()
     return RedirectResponse(
-        url=f"/api/sample/terms?sid={doc['_id']}&slug={doc['slug']}",
+        url=f"/api/sample/form?sid={doc['_id']}&slug={doc['slug']}",
         status_code=302,
     )
 

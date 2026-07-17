@@ -304,6 +304,8 @@ class UserService:
         return {"detail": "Registro removido com sucesso"}
 
     async def register_pickup(self, payload: UserPickupRequest) -> UserPickupResponse:
+        from domains.machine.services import MachineService
+
         if not payload.id and not payload.email:
             raise HTTPException(status_code=400, detail="Informe id ou email")
 
@@ -314,18 +316,21 @@ class UserService:
             raise HTTPException(status_code=404, detail="Registro não encontrado")
 
         day_dt = start_of_day_utc(payload.day)
-        can_pick_from_dt = start_of_day_utc(user.get("canPickFrom") or day_dt)
         prev_pick = user.get("pickedDay")
         prev_picked_dt = start_of_day_utc(prev_pick) if prev_pick else None
-        is_first_pick = prev_picked_dt is None and int(user.get("productsPicked", 0)) == 0
 
-        if not is_first_pick and day_dt.date() < can_pick_from_dt.date():
-            raise HTTPException(
-                status_code=422,
-                detail=f"Só pode retirar a partir de {can_pick_from_dt.date().isoformat()}",
-            )
         if prev_picked_dt is not None and prev_picked_dt.date() == day_dt.date():
             raise HTTPException(status_code=409, detail="Retirada já registrada para este dia")
+
+        cycle_status = await MachineService().pickup_cycle()
+        if cycle_status != "completed":
+            log.warning(
+                "user-pickup-not-confirmed",
+                query=query,
+                cycle_status=cycle_status,
+                collection=self.repository.collection_name,
+            )
+            raise HTTPException(status_code=502, detail="Retirada não confirmada pela máquina")
 
         next_can_pick_dt = start_of_day_utc(day_dt + timedelta(days=1))
         modified = await self.repository.register_pickup(

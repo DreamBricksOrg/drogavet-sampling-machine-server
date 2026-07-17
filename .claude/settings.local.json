@@ -45,7 +45,8 @@
       "Bash(git commit -q -m 'feat: serial fake em memoria \\(SERIAL_FAKE=true\\) com endpoint admin de injecao *)",
       "Bash(python -m pytest tests -q)",
       "Bash(python -)",
-      "Bash(python -m pytest tests/test_open_form.py -q)"
+      "Bash(python -m pytest tests/test_open_form.py -q)",
+      "Bash(python -m pytest tests/ -q)"
     ]
   }
 }

@@ -1,136 +1,82 @@
 .container {
     width: 100%;
     min-height: 100vh;
-    background-image: url('../assets/images/tela1_background.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-}
-
-
-.text-content {
-    margin-top: 20px;
+    background-color: #122948;
+    position: relative;
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
-    text-transform: uppercase;
 }
 
-@media (min-height: 720px) {
-    .text-content {
-        margin-top: 40px;
-    }
+.content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
 }
 
-.text-content p:first-child {
-    font-family: 'Norpeth';
-    font-weight: 300;
-    color: #fff;
-    font-size: 1.6rem;
-    letter-spacing: 0.2rem;
-    text-transform: uppercase;
-}
-
-.text-content p:nth-child(2) {
-    font-family: 'Norpeth';
-    font-weight: 600;
-    font-size: 1.5rem;
-    letter-spacing: 0.2rem;
-    text-transform: uppercase;
-    color: #FDBB17;
-}
-
-.text-content p:nth-child(3) {
-    margin-top: 5px;
-    font-family: 'Norpeth';
-    font-weight: 300;
-    font-size: 0.75rem;
-    letter-spacing: 0.2rem;
-    text-transform: uppercase;
-    color: #FDBB17;
-}
-
-@media (min-height: 720px) {
-    .text-content p:nth-child(3) {
-        margin-top: 20px;
-    }
-}
-
-.product-image {
+.header {
     width: 100%;
-    height: 280px;
+    height: 5.3rem;
     display: flex;
     justify-content: center;
     align-items: center;
+    margin-top: 1rem;
 }
 
-.product-image img {
-    width: 25%;
+.header img {
+    height: 70%;
     object-fit: contain;
 }
 
-.text-bottom {
+.header-foguete {
+    margin-top: 2rem;
+    height: 2.5rem;
+    width: 90%;
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-transform: uppercase;
-
-    @media (min-height: 720px) {
-        margin-top: 20px;
-    }
+    flex-direction: row;
+    justify-content: flex-end;
 }
 
-.text-bottom p:first-child {
-    font-family: 'Norpeth';
-    font-weight: 300;
-    color: #FDBB17;
-    font-size: 1rem;
-    letter-spacing: 0.2rem;
-    text-transform: uppercase;
+.header-foguete img {
+    height: 100%;
+    object-fit: contain;
 }
 
-.text-bottom p:nth-child(2) {
-    font-family: 'Norpeth';
-    font-weight: 300;
-    font-size: 1rem;
-    letter-spacing: 0.2rem;
-    text-transform: uppercase;
-    color: #FDBB17;
-}
-
-.text-bottom p:nth-child(3) {
-    font-family: 'Norpeth';
-    font-weight: 600;
-    font-size: 1rem;
-    letter-spacing: 0.2rem;
-    text-transform: uppercase;
-    color: #FDBB17;
-}
-
-
-.text-footer {
-    margin-top: 30px;
-    padding-bottom: 50px;
+.header-raio {
+    height: 2.5rem;
+    width: 90%;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: flex-start;
+}
+
+.header-raio img {
+    height: 100%;
+    object-fit: contain;
+}
+
+.description {
+    width: 80%;
+
+}
+
+.description img {
+    width: 100%;
+    object-fit: contain;
+}
+
+.footer {
+    width: 100%;
+    display: flex;
+    justify-content: center;
     align-items: center;
-    text-transform: uppercase;
-    gap: 1px;
+    margin-top: auto;
+    padding-top: 3rem;
 }
 
-@media (min-height: 720px) {
-    .text-footer {
-        margin-top: 60px;
-    }
-}
-
-.text-footer p {
-    font-family: 'Norpeth';
-    font-weight: 300;
-    font-size: 5px;
-    letter-spacing: 0.2rem;
-    color: #FDBB17;
-    text-align: center;
-    margin: 0;
+.footer img {
+    width: 100%;
+    object-fit: contain;
 }
