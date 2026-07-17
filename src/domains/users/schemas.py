@@ -51,6 +51,7 @@ class SessionGetResponse(BaseModel):
 class UserInitRequest(BaseModel):
     name: str = Field(..., min_length=1)
     email: EmailStr
+    phone: Optional[str] = Field(None, description="Celular no formato (99) 99999-9999")
     code: str
     registerDay: Optional[datetime] = None
 
@@ -80,6 +81,7 @@ class UserGetResponse(BaseModel):
     id: str
     name: str
     email: EmailStr
+    phone: Optional[str] = None
     status: Status
     registerDay: datetime
     canPickFrom: datetime
