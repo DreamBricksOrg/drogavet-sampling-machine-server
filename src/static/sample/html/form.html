@@ -59,7 +59,7 @@
 
             <div class="button-container">
                 <img src="/templates/sample/assets/images/DROGAVET_ASSETS_LANDING/TELA_01/BT_ENVIAR.png" alt="Enviar"
-                    id="btn-enviar" onclick="document.getElementById('formulario').dispatchEvent(new Event('submit'))">
+                    id="btn-enviar" onclick="submitForm()">
             </div>
 
         </div>
@@ -213,8 +213,8 @@
                 : '/api/sample/claim';
         }
 
-        document.getElementById('formulario').addEventListener('submit', async function (e) {
-            e.preventDefault();
+        async function submitForm(e) {
+            if (e) e.preventDefault();
             if (!validarCampos(true)) return;
 
             const sessionId = localStorage.getItem('session_id') || '';
@@ -244,7 +244,10 @@
                     confirmButtonText: 'OK',
                 });
             }
-        });
+        }
+
+        // Enter em um campo de texto ainda dispara o submit nativo do form (trusted event) — mantém funcionando.
+        document.getElementById('formulario').addEventListener('submit', submitForm);
 
         document.addEventListener('DOMContentLoaded', saveSessionData);
     </script>
