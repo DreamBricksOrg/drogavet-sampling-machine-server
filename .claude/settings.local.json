@@ -46,7 +46,10 @@
       "Bash(python -m pytest tests -q)",
       "Bash(python -)",
       "Bash(python -m pytest tests/test_open_form.py -q)",
-      "Bash(python -m pytest tests/ -q)"
+      "Bash(python -m pytest tests/ -q)",
+      "Bash(python -c \"import logcenter_sdk, inspect; print\\(inspect.getsource\\(logcenter_sdk.LogCenterSender.send_sync\\)\\)\")",
+      "Bash(python -m py_compile src/domains/users/services.py)",
+      "Bash(python -m py_compile src/domains/users/routes.py)"
     ]
   }
 }

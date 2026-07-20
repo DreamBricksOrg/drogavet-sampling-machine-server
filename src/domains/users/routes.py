@@ -111,7 +111,7 @@ async def get_session_info(sid: str):
 
 @session_router.get("/claim", response_class=HTMLResponse)
 async def html_claim(request: Request):
-    return _render_logged_page(request, "claim.html", "claim_page_accessed", "claim")
+    return _render_logged_page(request, "claim.html", "servidor_claim", "claim")
 
 
 @session_router.get("/welcome", response_class=HTMLResponse)
@@ -128,11 +128,13 @@ async def html_form(request: Request):
         raise HTTPException(400, "sid ausente")
     try:
         template_name = await SessionService().open_form(sid)
+        LogSender().log("servidor_form", additional={"session_id": sid}, status="SUCCESS", tags=["form", "page", "server"])
         return templates.TemplateResponse(request, template_name)
     except HTTPException:
         raise
     except Exception as exc:
         log.error("html-render-failed", error=str(exc), page="form")
+        LogSender().log("servidor_error", additional={"page": "form", "session_id": sid, "error": str(exc)}, status="ERROR", tags=["error", "page", "server"])
         return templates.TemplateResponse(request, "error.html")
 
 
@@ -150,4 +152,5 @@ def _render_logged_page(request: Request, template_name: str, event: str, page: 
         return templates.TemplateResponse(request, template_name)
     except Exception as exc:
         log.error("html-render-failed", error=str(exc), page=page)
+        LogSender().log("servidor_error", additional={"page": page, "error": str(exc)}, status="ERROR", tags=["error", "page", "server"])
         return templates.TemplateResponse(request, "error.html")

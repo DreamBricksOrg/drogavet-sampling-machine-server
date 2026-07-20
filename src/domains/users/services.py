@@ -157,6 +157,12 @@ class SessionService:
         }
         await self.sessions.create(doc)
         log.info("static-session-created", session_id=session_id)
+        LogSender().log(
+            "qrcode_static_session_started",
+            additional={"session_id": session_id, "slug": doc["slug"]},
+            status="SUCCESS",
+            tags=["qrcode_static", "start", "server"],
+        )
         return doc
 
     async def start_pickup(self, req: SessionPickupRequest) -> SessionPickupResponse:
@@ -259,6 +265,16 @@ class UserService:
                         can_pick_at=str(can_pick_at),
                         collection=repo.collection_name,
                     )
+                    LogSender().log(
+                        "form_submit_blocked_cooldown",
+                        additional={
+                            "id": existing["_id"],
+                            "email": email_lower,
+                            "can_pick_at": can_pick_at.isoformat(),
+                        },
+                        status="ERROR",
+                        tags=["form", "register", "cooldown", "server"],
+                    )
                     raise HTTPException(
                         status_code=429,
                         detail=f"Aguarde até {can_pick_at.isoformat()} para retirar novamente",
@@ -277,6 +293,19 @@ class UserService:
                 },
             )
             log.info("user-repick", id=existing["_id"], collection=repo.collection_name)
+            LogSender().log(
+                "form_submitted",
+                additional={
+                    "id": existing["_id"],
+                    "name": payload.name,
+                    "email": email_lower,
+                    "phone": payload.phone,
+                    "code": payload.code,
+                    "repick": True,
+                },
+                status="SUCCESS",
+                tags=["form", "register", "repick", "server"],
+            )
             return UserInitResponse(
                 id=updated["_id"],
                 name=updated["name"],
@@ -313,6 +342,19 @@ class UserService:
             raise HTTPException(status_code=429, detail="Cadastro em andamento, tente novamente")
 
         log.info("user-created", id=reg_id, collection=repo.collection_name)
+        LogSender().log(
+            "form_submitted",
+            additional={
+                "id": reg_id,
+                "name": doc["name"],
+                "email": doc["email"],
+                "phone": doc["phone"],
+                "code": doc["code"],
+                "repick": False,
+            },
+            status="SUCCESS",
+            tags=["form", "register", "server"],
+        )
         return UserInitResponse(
             id=reg_id,
             name=doc["name"],

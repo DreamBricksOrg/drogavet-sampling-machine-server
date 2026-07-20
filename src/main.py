@@ -67,7 +67,7 @@ async def lifespan(app: FastAPI):
         await asyncio.sleep(0.3)
         await sender.send(
             level="DEBUG",
-            message="Sample Machine startup",
+            message="sample_machine_startup",
             status="SUCCESS",
             tags=["startup", "server"],
             data={"env": settings.ENV, "version": "0.1.0-dev"},
