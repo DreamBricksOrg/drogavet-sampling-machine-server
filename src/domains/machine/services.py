@@ -73,7 +73,7 @@ class InventoryService:
         self.repository.save(updated_data)
 
         if "current_quantity" in data:
-            log_sender.log("inventory_updated", additional={"old": old_quantity, "new": data["current_quantity"]}, status="SUCCESS", tags=["inventory", "update", "server"])
+            log_sender.log("estoque_atualizado", additional={"old": old_quantity, "new": data["current_quantity"]}, status="SUCCESS", tags=["estoque", "atualizacao", "servidor"])
             async with serial_lock:
                 get_serial_comm().send("reset")
             log.info(
@@ -112,7 +112,7 @@ class MachineService:
                     try:
                         response_value = int(response)
                         if response_value == -1:
-                            log_sender.log("serial_error", additional="drop_failed", status="ERROR", tags=["serial", "drop", "error", "server"])
+                            log_sender.log("erro_serial", additional="falha_na_dispensa", status="ERROR", tags=["serial", "dispensa", "erro", "servidor"])
                             log.error("serial-error", error="drop_failed", response=response_value)
                             udp_sender.send_with_confirmation("error")
                             return {"status": "failed", "quantity_requested": quantity, "quantity_dispensed": 0}
@@ -120,13 +120,13 @@ class MachineService:
                             log.info("product-dropped", response=response_value, quantity=quantity)
                             for _ in range(response_value):
                                 await self.inventory.update_on_drop()
-                            log_sender.log("drop_value_dispensed", additional={"requested": quantity, "dispensed": response_value}, status="SUCCESS", tags=["drop", "dispense", "server"])
+                            log_sender.log("valor_dispensado", additional={"requested": quantity, "dispensed": response_value}, status="SUCCESS", tags=["dispensa", "servidor"])
                             udp_sender.send_with_confirmation("next")
                             return {"status": "completed", "quantity_requested": quantity, "quantity_dispensed": response_value}
                     except ValueError:
                         pass
                 await asyncio.sleep(0.1)
-        log_sender.log("serial_timeout", status="ERROR", tags=["serial", "drop", "timeout", "server"])
+        log_sender.log("tempo_esgotado_serial", status="ERROR", tags=["serial", "dispensa", "tempo_esgotado", "servidor"])
         log.error("serial-timeout")
         udp_sender.send_with_confirmation("timeout")
         return {"status": "failed", "quantity_requested": quantity, "quantity_dispensed": 0}
@@ -141,18 +141,18 @@ class MachineService:
             while time.time() - start < 20:
                 response = serial_comm.receive()
                 if response == "dropped":
-                    log_sender.log("product_dropped", status="SUCCESS", tags=["product", "drop", "success", "server"])
+                    log_sender.log("produto_dispensado", status="SUCCESS", tags=["produto", "dispensa", "sucesso", "servidor"])
                     log.info("product-dropped")
                     await self.inventory.update_on_drop()
                     udp_sender.send_with_confirmation("next")
                     return "completed"
                 if response in ["hand_timeout", "out_of_stock"]:
-                    log_sender.log("serial_error", additional=response, status="ERROR", tags=["serial", "drop", "error", "server"])
+                    log_sender.log("erro_serial", additional=response, status="ERROR", tags=["serial", "dispensa", "erro", "servidor"])
                     log.error("serial-error", error=response)
                     udp_sender.send_with_confirmation("error")
                     return "failed"
                 await asyncio.sleep(0.1)
-        log_sender.log("serial_timeout", status="ERROR", tags=["serial", "drop", "timeout", "server"])
+        log_sender.log("tempo_esgotado_serial", status="ERROR", tags=["serial", "dispensa", "tempo_esgotado", "servidor"])
         log.error("serial-timeout")
         udp_sender.send_with_confirmation("timeout")
         return "failed"
@@ -193,16 +193,16 @@ class MachineService:
                 while picked_up or time.time() - start < timeout:
                     if picked_up or serial_comm.receive() == "1":
                         await self.inventory.update_on_drop()
-                        log_sender.log("pickup_dispensed", status="SUCCESS", tags=["pickup", "drop", "success", "server"])
+                        log_sender.log("retirada_dispensada", status="SUCCESS", tags=["retirada", "dispensa", "sucesso", "servidor"])
                         log.info("pickup-dispensed")
                         return "completed"
                     await asyncio.sleep(0.1)
 
-                log_sender.log("pickup_timeout", status="ERROR", tags=["pickup", "drop", "timeout", "server"])
+                log_sender.log("tempo_esgotado_retirada", status="ERROR", tags=["retirada", "dispensa", "tempo_esgotado", "servidor"])
                 log.error("pickup-timeout")
                 return "failed"
             except Exception as exc:
-                log_sender.log("pickup_error", additional=str(exc), status="ERROR", tags=["pickup", "drop", "error", "server"])
+                log_sender.log("erro_retirada", additional=str(exc), status="ERROR", tags=["retirada", "dispensa", "erro", "servidor"])
                 log.error("pickup-cycle-error", error=str(exc))
                 return "failed"
             finally:
@@ -216,7 +216,7 @@ class MachineService:
         async with serial_lock:
             get_serial_comm().send(message)
         await self.inventory.update_on_drop()
-        LogSender().log("admin_dispense_triggered", status="SUCCESS")
+        LogSender().log("dispensa_acionada_pelo_admin", status="SUCCESS")
         log.info("admin-dispensed")
         return {"status": "admin_dispense"}
 
@@ -254,18 +254,18 @@ class MachineService:
                 response = serial_comm.receive()
                 if response == "on":
                     udp_sender.send_with_confirmation("machine_on")
-                    log_sender.log("machine_started", status="SUCCESS", tags=["machine", "start", "success", "server"])
+                    log_sender.log("maquina_ligada", status="SUCCESS", tags=["maquina", "ligar", "sucesso", "servidor"])
                     log.info("machine-on")
                     return {"status": "machine_on"}
                 await asyncio.sleep(0.1)
         log.error("machine-on-timeout")
-        log_sender.log("machine_on_timeout", status="ERROR", tags=["machine", "start", "timeout", "server"])
+        log_sender.log("tempo_esgotado_ligar_maquina", status="ERROR", tags=["maquina", "ligar", "tempo_esgotado", "servidor"])
         return {"status": "machine_dont_respond"}
 
     async def turn_off(self) -> dict:
         async with serial_lock:
             get_serial_comm().send("off")
-        LogSender().log("machine_turned_off", status="SUCCESS", tags=["machine", "turn_off", "success", "server"])
+        LogSender().log("maquina_desligada", status="SUCCESS", tags=["maquina", "desligar", "sucesso", "servidor"])
         log.info("machine-off")
         return {"status": "machine_turned_off"}
 

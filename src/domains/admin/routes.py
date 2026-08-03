@@ -68,7 +68,7 @@ async def delete_user(user_id: str = Path(..., description="ID do Usuário a ser
 @router.get("/inventory", response_class=HTMLResponse, dependencies=[Depends(admin_required)])
 async def html_admin_inventory(request: Request):
     try:
-        LogSender().log("admin_page_accessed")
+        LogSender().log("pagina_admin_acessada")
         return templates.TemplateResponse(request, "admin.html")
     except Exception as exc:
         log.error("html-render-failed", error=str(exc), page="admin")

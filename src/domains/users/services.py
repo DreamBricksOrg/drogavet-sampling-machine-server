@@ -109,7 +109,7 @@ class SessionService:
 
         status_final = "failed"
         try:
-            LogSender().log("session_complete")
+            LogSender().log("sessao_concluida")
             status_final = await MachineService().drop_waiting_callback(slug=req.slug)
             return SessionCompleteResponse(status="ok", session_id=req.session_id)
         except HTTPException:
@@ -133,7 +133,7 @@ class SessionService:
         updated = await self.sessions.try_mark_form_opened(sid, now_utc())
         if updated:
             log.info("form-opened-first-time", session_id=sid)
-            LogSender().log("form_page_accessed")
+            LogSender().log("pagina_formulario_acessada")
             get_udp_sender().send("next")
         else:
             # refresh com status form_shown: reexibe o form sem reenviar UDP
@@ -158,10 +158,10 @@ class SessionService:
         await self.sessions.create(doc)
         log.info("static-session-created", session_id=session_id)
         LogSender().log(
-            "qrcode_static_session_started",
+            "sessao_qrcode_estatico_iniciada",
             additional={"session_id": session_id, "slug": doc["slug"]},
             status="SUCCESS",
-            tags=["qrcode_static", "start", "server"],
+            tags=["qrcode_estatico", "inicio", "servidor"],
         )
         return doc
 
@@ -175,7 +175,7 @@ class SessionService:
                 raise HTTPException(400, "Slug não corresponde à sessão")
             raise HTTPException(409, "Sessão já encerrada ou em processamento")
 
-        LogSender().log("pickup_started")
+        LogSender().log("retirada_iniciada")
         asyncio.create_task(self._run_pickup(req.session_id))
         return SessionPickupResponse(status="processing", session_id=req.session_id)
 
@@ -266,14 +266,14 @@ class UserService:
                         collection=repo.collection_name,
                     )
                     LogSender().log(
-                        "form_submit_blocked_cooldown",
+                        "envio_formulario_bloqueado_cooldown",
                         additional={
                             "id": existing["_id"],
                             "email": email_lower,
                             "can_pick_at": can_pick_at.isoformat(),
                         },
                         status="ERROR",
-                        tags=["form", "register", "cooldown", "server"],
+                        tags=["formulario", "cadastro", "cooldown", "servidor"],
                     )
                     raise HTTPException(
                         status_code=429,
@@ -294,7 +294,7 @@ class UserService:
             )
             log.info("user-repick", id=existing["_id"], collection=repo.collection_name)
             LogSender().log(
-                "form_submitted",
+                "formulario_enviado",
                 additional={
                     "id": existing["_id"],
                     "name": payload.name,
@@ -304,7 +304,7 @@ class UserService:
                     "repick": True,
                 },
                 status="SUCCESS",
-                tags=["form", "register", "repick", "server"],
+                tags=["formulario", "cadastro", "retirada_repetida", "servidor"],
             )
             return UserInitResponse(
                 id=updated["_id"],
@@ -343,7 +343,7 @@ class UserService:
 
         log.info("user-created", id=reg_id, collection=repo.collection_name)
         LogSender().log(
-            "form_submitted",
+            "formulario_enviado",
             additional={
                 "id": reg_id,
                 "name": doc["name"],
@@ -353,7 +353,7 @@ class UserService:
                 "repick": False,
             },
             status="SUCCESS",
-            tags=["form", "register", "server"],
+            tags=["formulario", "cadastro", "servidor"],
         )
         return UserInitResponse(
             id=reg_id,

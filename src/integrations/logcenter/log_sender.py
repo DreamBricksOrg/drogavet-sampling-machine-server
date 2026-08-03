@@ -1,9 +1,16 @@
 import json
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional, Union
 
 from logcenter_sdk import LogCenterConfig, LogCenterSender
 from logcenter_sdk.client import LogCenterHttpClient
 from infrastructure.config import settings
+
+BRASILIA_TZ = timezone(timedelta(hours=-3))
+
+
+def _brasilia_iso() -> str:
+    return datetime.now(BRASILIA_TZ).isoformat()
 
 
 def _patched_headers(self: LogCenterHttpClient) -> Dict[str, str]:
@@ -81,4 +88,4 @@ def _to_data(additional: Union[str, Dict[str, Any], None]) -> Optional[Dict[str,
 
 class LogSender:
     def log(self, message: str, *, additional: Union[str, Dict[str, Any], None] = None, status: Optional[str] = None, tags: Optional[List[str]] = None) -> None:
-        sender.send_sync("DEBUG", message, data=_to_data(additional), status=status, tags=tags)
+        sender.send_sync("DEBUG", message, data=_to_data(additional), status=status, tags=tags, timestamp=_brasilia_iso())

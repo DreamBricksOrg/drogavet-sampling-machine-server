@@ -101,7 +101,7 @@ async def start_pickup(payload: SessionPickupRequest):
 
 @session_router.get("/thanks", response_class=HTMLResponse)
 async def html_thanks(request: Request):
-    return _render_logged_page(request, "thanks.html", "thanks_page_accessed", "thanks")
+    return _render_logged_page(request, "thanks.html", "pagina_agradecimento_acessada", "thanks")
 
 
 @session_router.get("/session/{sid}", response_model=SessionGetResponse)
@@ -116,7 +116,7 @@ async def html_claim(request: Request):
 
 @session_router.get("/welcome", response_class=HTMLResponse)
 async def html_welcome(request: Request):
-    return _render_logged_page(request, "welcome.html", "welcome_page_accessed", "welcome")
+    return _render_logged_page(request, "welcome.html", "pagina_boasvindas_acessada", "welcome")
 
 
 @session_router.get("/form", response_class=HTMLResponse)
@@ -128,19 +128,19 @@ async def html_form(request: Request):
         raise HTTPException(400, "sid ausente")
     try:
         template_name = await SessionService().open_form(sid)
-        LogSender().log("servidor_form", additional={"session_id": sid}, status="SUCCESS", tags=["form", "page", "server"])
+        LogSender().log("servidor_form", additional={"session_id": sid}, status="SUCCESS", tags=["formulario", "pagina", "servidor"])
         return templates.TemplateResponse(request, template_name)
     except HTTPException:
         raise
     except Exception as exc:
         log.error("html-render-failed", error=str(exc), page="form")
-        LogSender().log("servidor_error", additional={"page": "form", "session_id": sid, "error": str(exc)}, status="ERROR", tags=["error", "page", "server"])
+        LogSender().log("servidor_error", additional={"page": "form", "session_id": sid, "error": str(exc)}, status="ERROR", tags=["erro", "pagina", "servidor"])
         return templates.TemplateResponse(request, "error.html")
 
 
 @session_router.get("/terms", response_class=HTMLResponse)
 async def html_terms(request: Request):
-    return _render_logged_page(request, "terms.html", "terms_page_accessed", "terms")
+    return _render_logged_page(request, "terms.html", "pagina_termos_acessada", "terms")
 
 
 
@@ -152,5 +152,5 @@ def _render_logged_page(request: Request, template_name: str, event: str, page: 
         return templates.TemplateResponse(request, template_name)
     except Exception as exc:
         log.error("html-render-failed", error=str(exc), page=page)
-        LogSender().log("servidor_error", additional={"page": page, "error": str(exc)}, status="ERROR", tags=["error", "page", "server"])
+        LogSender().log("servidor_error", additional={"page": page, "error": str(exc)}, status="ERROR", tags=["erro", "pagina", "servidor"])
         return templates.TemplateResponse(request, "error.html")
