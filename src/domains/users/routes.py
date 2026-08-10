@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import List
 
-from fastapi import APIRouter, Body, HTTPException, Query, Request
+from fastapi import APIRouter, Body, HTTPException, Query, Request, Response
 from pydantic import EmailStr
 from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.templating import Jinja2Templates
@@ -23,7 +23,14 @@ from .schemas import (
     UserUpdateRequest,
 )
 from .repositories import DEFAULT_COLLECTION
-from .services import SessionService, UserService
+from .services import (
+    PICKUP_BLOCK_COOKIE_NAME,
+    SessionService,
+    UserService,
+    build_pickup_block_cookie_value,
+    is_pickup_blocked,
+    now_utc,
+)
 
 _BASE_DIR = Path(__file__).resolve().parents[2]
 templates = Jinja2Templates(directory=str(_BASE_DIR / "static" / "sample" / "html"))
@@ -87,7 +94,17 @@ async def init_qrcode():
 
 
 @session_router.get("/start")
-async def start_static_session():
+async def start_static_session(request: Request):
+    cookie_value = request.cookies.get(PICKUP_BLOCK_COOKIE_NAME)
+    if is_pickup_blocked(cookie_value, now_utc(), settings.PICKUP_COOKIE_BLOCK_HOURS):
+        LogSender().log(
+            "servidor_start_blocked",
+            additional={"cookie": cookie_value},
+            status="ERROR",
+            tags=["form", "start", "blocked", "server"],
+        )
+        return templates.TemplateResponse(request, "error.html")
+
     doc = await SessionService().init_static_session()
     return RedirectResponse(
         url=f"/api/sample/form?sid={doc['_id']}&slug={doc['slug']}",
@@ -106,8 +123,19 @@ async def html_thanks(request: Request):
 
 
 @session_router.get("/session/{sid}", response_model=SessionGetResponse)
-async def get_session_info(sid: str):
-    return await SessionService().get_session_info(sid)
+async def get_session_info(sid: str, response: Response):
+    info = await SessionService().get_session_info(sid)
+    if info.status == "completed" and info.mode == "qrcode_static":
+        response.set_cookie(
+            key=PICKUP_BLOCK_COOKIE_NAME,
+            value=build_pickup_block_cookie_value(sid, now_utc()),
+            max_age=int(settings.PICKUP_COOKIE_BLOCK_HOURS * 3600),
+            httponly=True,
+            samesite="lax",
+            secure=settings.ENV != "dev",
+            path="/api/sample",
+        )
+    return info
 
 
 @session_router.get("/claim", response_class=HTMLResponse)

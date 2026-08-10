@@ -1,11 +1,17 @@
 import asyncio
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from fastapi import HTTPException
 
 from domains.machine.services import MachineService
 from domains.users.schemas import SessionPickupRequest
-from domains.users.services import SessionService
+from domains.users.services import (
+    PICKUP_BLOCK_COOKIE_NAME,
+    SessionService,
+    build_pickup_block_cookie_value,
+    is_pickup_blocked,
+)
 
 
 class FakeSessionRepository:
@@ -137,3 +143,40 @@ async def test_start_pickup_sid_inexistente(service):
     with pytest.raises(HTTPException) as exc:
         await service.start_pickup(SessionPickupRequest(session_id="nao-existe", slug="x"))
     assert exc.value.status_code == 404
+
+
+def test_build_pickup_block_cookie_value_formato():
+    now = datetime(2026, 8, 10, 12, 0, 0, tzinfo=timezone.utc)
+    value = build_pickup_block_cookie_value("sid-123", now)
+    assert value == f"sid-123:{int(now.timestamp())}"
+
+
+def test_is_pickup_blocked_dentro_da_janela():
+    now = datetime(2026, 8, 10, 12, 0, 0, tzinfo=timezone.utc)
+    cookie_value = build_pickup_block_cookie_value("sid-123", now)
+    later = now + timedelta(hours=11, minutes=59)
+    assert is_pickup_blocked(cookie_value, later, hours=12) is True
+
+
+def test_is_pickup_blocked_apos_a_janela():
+    now = datetime(2026, 8, 10, 12, 0, 0, tzinfo=timezone.utc)
+    cookie_value = build_pickup_block_cookie_value("sid-123", now)
+    later = now + timedelta(hours=12, minutes=1)
+    assert is_pickup_blocked(cookie_value, later, hours=12) is False
+
+
+def test_is_pickup_blocked_cookie_ausente():
+    now = datetime(2026, 8, 10, 12, 0, 0, tzinfo=timezone.utc)
+    assert is_pickup_blocked(None, now, hours=12) is False
+    assert is_pickup_blocked("", now, hours=12) is False
+
+
+def test_is_pickup_blocked_cookie_malformado():
+    now = datetime(2026, 8, 10, 12, 0, 0, tzinfo=timezone.utc)
+    assert is_pickup_blocked("sem-dois-pontos", now, hours=12) is False
+    assert is_pickup_blocked("sid-123:nao-e-numero", now, hours=12) is False
+    assert is_pickup_blocked("sid-123:", now, hours=12) is False
+
+
+def test_pickup_block_cookie_name():
+    assert PICKUP_BLOCK_COOKIE_NAME == "sample_pickup_block"

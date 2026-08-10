@@ -37,6 +37,25 @@ def now_utc() -> datetime:
     return datetime.now(timezone.utc)
 
 
+PICKUP_BLOCK_COOKIE_NAME = "sample_pickup_block"
+
+
+def build_pickup_block_cookie_value(session_id: str, now: datetime) -> str:
+    return f"{session_id}:{int(now.timestamp())}"
+
+
+def is_pickup_blocked(cookie_value: str | None, now: datetime, hours: float) -> bool:
+    if not cookie_value:
+        return False
+    try:
+        _, ts_str = cookie_value.rsplit(":", 1)
+        ts = int(ts_str)
+    except (ValueError, AttributeError):
+        return False
+    elapsed_seconds = now.timestamp() - ts
+    return 0 <= elapsed_seconds < hours * 3600
+
+
 def get_udp_sender() -> UDPSender:
     global _udp_sender
     if _udp_sender is None:

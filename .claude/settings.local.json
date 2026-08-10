@@ -49,7 +49,16 @@
       "Bash(python -m pytest tests/ -q)",
       "Bash(python -c \"import logcenter_sdk, inspect; print\\(inspect.getsource\\(logcenter_sdk.LogCenterSender.send_sync\\)\\)\")",
       "Bash(python -m py_compile src/domains/users/services.py)",
-      "Bash(python -m py_compile src/domains/users/routes.py)"
+      "Bash(python -m py_compile src/domains/users/routes.py)",
+      "Bash(mkdir -p \"c:\\\\Users\\\\db\\\\Documents\\\\db\\\\prj\\\\drogavet-sampling-machine-server\\\\docs\\\\superpowers\\\\specs\" 2>/dev/null; ls \"c:\\\\Users\\\\db\\\\Documents\\\\db\\\\prj\\\\drogavet-sampling-machine-server\\\\docs\\\\superpowers\\\\specs\" 2>/dev/null; echo done)",
+      "Bash(git -C \"c:\\\\Users\\\\db\\\\Documents\\\\db\\\\prj\\\\drogavet-sampling-machine-server\" branch --show-current)",
+      "Bash(git -C \"c:\\\\Users\\\\db\\\\Documents\\\\db\\\\prj\\\\drogavet-sampling-machine-server\" status)",
+      "Bash(PYTHONPATH=src python -m pytest tests/test_static_session.py -k pickup_block -v)",
+      "Bash(PYTHONPATH=src python -m pytest tests/)",
+      "Bash(PYTHONPATH=src python -m pytest tests/ -v)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\db\\Documents\\db\\prj\\drogavet-sampling-machine-server\\docs\\superpowers\\specs"
     ]
   }
 }

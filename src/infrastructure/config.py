@@ -69,6 +69,7 @@ class Settings(BaseSettings):
     DROP_CODE: str = Field(..., env="DROP_CODE")
     PICKUP_TIMEOUT_SECONDS: int = Field(60, env="PICKUP_TIMEOUT_SECONDS")
     PICKUP_COOLDOWN_HOURS: float = Field(12, env="PICKUP_COOLDOWN_HOURS")
+    PICKUP_COOKIE_BLOCK_HOURS: float = Field(12, env="PICKUP_COOKIE_BLOCK_HOURS")
 
     # Criptografia dos dados do formulário (RSA+AES no navegador) — opcional, desligada por padrão
     ENCRYPTION_ENABLED: bool = Field(False, env="ENCRYPTION_ENABLED")
