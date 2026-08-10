@@ -3,6 +3,7 @@ import hashlib
 import secrets
 import uuid
 from datetime import date, datetime, time, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 import structlog
 from fastapi import HTTPException
@@ -54,6 +55,11 @@ def is_pickup_blocked(cookie_value: str | None, now: datetime, hours: float) -> 
         return False
     elapsed_seconds = now.timestamp() - ts
     return 0 <= elapsed_seconds < hours * 3600
+
+
+def is_within_business_hours(now: datetime, timezone_name: str, open_hour: int, close_hour: int) -> bool:
+    local_hour = now.astimezone(ZoneInfo(timezone_name)).hour
+    return open_hour <= local_hour < close_hour
 
 
 def get_udp_sender() -> UDPSender:

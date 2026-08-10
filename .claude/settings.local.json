@@ -55,7 +55,22 @@
       "Bash(git -C \"c:\\\\Users\\\\db\\\\Documents\\\\db\\\\prj\\\\drogavet-sampling-machine-server\" status)",
       "Bash(PYTHONPATH=src python -m pytest tests/test_static_session.py -k pickup_block -v)",
       "Bash(PYTHONPATH=src python -m pytest tests/)",
-      "Bash(PYTHONPATH=src python -m pytest tests/ -v)"
+      "Bash(PYTHONPATH=src python -m pytest tests/ -v)",
+      "Bash(echo \"exit:$?\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:8000/api/health --max-time 2)",
+      "Read(//c/tmp/**)",
+      "Bash(rm -f cookies.txt)",
+      "Bash(curl -s -c cookies.txt -b cookies.txt -D - -o /tmp/start1.html http://localhost:8000/api/sample/start -L --max-time 5)",
+      "mcp__plugin_context-mode_context-mode__ctx_execute",
+      "Bash(netstat -ano)",
+      "Bash(PYTHONPATH=src python -m pytest tests/test_static_session.py -k business_hours -v)",
+      "Bash(python -m py_compile domains/users/routes.py domains/users/services.py infrastructure/config.py)",
+      "Bash(python -c \"import tzdata\")",
+      "Bash(python -c \"import tzdata; print\\(tzdata.__file__\\)\")",
+      "Bash(python -c \"from zoneinfo import ZoneInfo; print\\(ZoneInfo\\('America/Sao_Paulo'\\)\\)\")",
+      "Bash(where python *)",
+      "Bash(\".venv/Scripts/python.exe\" -m pip install tzdata)",
+      "Bash(\".venv/Scripts/python.exe\" -c \"from zoneinfo import ZoneInfo; print\\(ZoneInfo\\('America/Sao_Paulo'\\)\\)\")"
     ],
     "additionalDirectories": [
       "c:\\Users\\db\\Documents\\db\\prj\\drogavet-sampling-machine-server\\docs\\superpowers\\specs"

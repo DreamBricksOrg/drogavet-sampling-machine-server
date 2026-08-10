@@ -71,6 +71,11 @@ class Settings(BaseSettings):
     PICKUP_COOLDOWN_HOURS: float = Field(12, env="PICKUP_COOLDOWN_HOURS")
     PICKUP_COOKIE_BLOCK_HOURS: float = Field(12, env="PICKUP_COOKIE_BLOCK_HOURS")
 
+    # Horário de funcionamento (formato 24h, ex.: 10 às 20)
+    SAMPLE_OPEN_HOUR: int = Field(10, env="SAMPLE_OPEN_HOUR")
+    SAMPLE_CLOSE_HOUR: int = Field(20, env="SAMPLE_CLOSE_HOUR")
+    SAMPLE_TIMEZONE: str = Field("America/Sao_Paulo", env="SAMPLE_TIMEZONE")
+
     # Criptografia dos dados do formulário (RSA+AES no navegador) — opcional, desligada por padrão
     ENCRYPTION_ENABLED: bool = Field(False, env="ENCRYPTION_ENABLED")
 

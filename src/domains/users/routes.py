@@ -29,6 +29,7 @@ from .services import (
     UserService,
     build_pickup_block_cookie_value,
     is_pickup_blocked,
+    is_within_business_hours,
     now_utc,
 )
 
@@ -95,6 +96,21 @@ async def init_qrcode():
 
 @session_router.get("/start")
 async def start_static_session(request: Request):
+    if not is_within_business_hours(
+        now_utc(), settings.SAMPLE_TIMEZONE, settings.SAMPLE_OPEN_HOUR, settings.SAMPLE_CLOSE_HOUR
+    ):
+        LogSender().log(
+            "servidor_start_blocked_horario",
+            additional={"open_hour": settings.SAMPLE_OPEN_HOUR, "close_hour": settings.SAMPLE_CLOSE_HOUR},
+            status="ERROR",
+            tags=["form", "start", "blocked", "horario", "server"],
+        )
+        return templates.TemplateResponse(
+            request,
+            "closed.html",
+            {"open_hour": settings.SAMPLE_OPEN_HOUR, "close_hour": settings.SAMPLE_CLOSE_HOUR},
+        )
+
     cookie_value = request.cookies.get(PICKUP_BLOCK_COOKIE_NAME)
     if is_pickup_blocked(cookie_value, now_utc(), settings.PICKUP_COOKIE_BLOCK_HOURS):
         LogSender().log(

@@ -22,3 +22,4 @@ ruff>=0.5
 phonenumbers>=9.0.26
 logcenter-sdk==0.1.dev0
 pyserial>=3.5
+tzdata>=2024.1; sys_platform == 'win32'
