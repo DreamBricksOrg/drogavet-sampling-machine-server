@@ -6,6 +6,7 @@ from pydantic import EmailStr
 from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.templating import Jinja2Templates
 
+from infrastructure.config import settings
 from integrations.logcenter.log_sender import LogSender
 from .schemas import (
     QRCodeInitResponse,
@@ -129,7 +130,8 @@ async def html_form(request: Request):
     try:
         template_name = await SessionService().open_form(sid)
         LogSender().log("servidor_form", additional={"session_id": sid}, status="SUCCESS", tags=["formulario", "pagina", "servidor"])
-        return templates.TemplateResponse(request, template_name)
+        context = {"encryption_enabled": settings.ENCRYPTION_ENABLED} if template_name == "form.html" else {}
+        return templates.TemplateResponse(request, template_name, context)
     except HTTPException:
         raise
     except Exception as exc:

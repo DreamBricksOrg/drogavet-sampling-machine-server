@@ -247,12 +247,32 @@ class UserService:
         except Exception as exc:
             log.warning("ensure-unique-email-index-failed", error=str(exc))
 
+        if payload.encrypted and not settings.ENCRYPTION_ENABLED:
+            raise HTTPException(status_code=400, detail="Criptografia desabilitada neste servidor")
+
         now = now_utc()
-        email_lower = str(payload.email).lower()
-        ehash = email_hash(email_lower)
         cooldown = timedelta(hours=settings.PICKUP_COOLDOWN_HOURS)
 
-        existing = await repo.find_one({"$or": [{"emailHash": ehash}, {"email": email_lower}]})
+        if payload.encrypted:
+            # com criptografia ativa, name/email/phone chegam cifrados do navegador
+            # (RSA+AES); o emailHash é calculado no cliente a partir do e-mail em
+            # texto puro e é a única forma de dedup possível nesse modo.
+            ehash = payload.emailHash
+            name_value = payload.encName
+            email_value = payload.encEmail
+            phone_value = payload.encPhone
+            log_name, log_email, log_phone = "***criptografado***", "***criptografado***", "***criptografado***"
+            dedup_query = {"emailHash": ehash}
+        else:
+            email_lower = str(payload.email).lower()
+            ehash = email_hash(email_lower)
+            name_value = payload.name
+            email_value = email_lower
+            phone_value = payload.phone
+            log_name, log_email, log_phone = payload.name, email_lower, payload.phone
+            dedup_query = {"$or": [{"emailHash": ehash}, {"email": email_lower}]}
+
+        existing = await repo.find_one(dedup_query)
         if existing:
             last_pick = existing.get("lastPick")
             if last_pick:
@@ -269,7 +289,7 @@ class UserService:
                         "envio_formulario_bloqueado_cooldown",
                         additional={
                             "id": existing["_id"],
-                            "email": email_lower,
+                            "email": log_email,
                             "can_pick_at": can_pick_at.isoformat(),
                         },
                         status="ERROR",
@@ -284,8 +304,8 @@ class UserService:
                 {"_id": existing["_id"]},
                 now,
                 {
-                    "name": payload.name,
-                    "phone": payload.phone,
+                    "name": name_value,
+                    "phone": phone_value,
                     "emailHash": ehash,
                     "lastPick": now,
                     "canPickFrom": now + cooldown,
@@ -297,9 +317,9 @@ class UserService:
                 "formulario_enviado",
                 additional={
                     "id": existing["_id"],
-                    "name": payload.name,
-                    "email": email_lower,
-                    "phone": payload.phone,
+                    "name": log_name,
+                    "email": log_email,
+                    "phone": log_phone,
                     "code": payload.code,
                     "repick": True,
                 },
@@ -320,10 +340,10 @@ class UserService:
         doc = {
             "_id": reg_id,
             "code": payload.code,
-            "name": payload.name,
-            "email": email_lower,
+            "name": name_value,
+            "email": email_value,
             "emailHash": ehash,
-            "phone": payload.phone,
+            "phone": phone_value,
             "registerDay": register_day,
             "canPickFrom": now + cooldown,
             "status": "registered",
@@ -338,7 +358,7 @@ class UserService:
         try:
             await repo.create(doc)
         except DuplicateKeyError:
-            log.warning("email-race-duplicate", email=payload.email, collection=repo.collection_name)
+            log.warning("email-race-duplicate", email=log_email, collection=repo.collection_name)
             raise HTTPException(status_code=429, detail="Cadastro em andamento, tente novamente")
 
         log.info("user-created", id=reg_id, collection=repo.collection_name)
@@ -346,9 +366,9 @@ class UserService:
             "formulario_enviado",
             additional={
                 "id": reg_id,
-                "name": doc["name"],
-                "email": doc["email"],
-                "phone": doc["phone"],
+                "name": log_name,
+                "email": log_email,
+                "phone": log_phone,
                 "code": doc["code"],
                 "repick": False,
             },

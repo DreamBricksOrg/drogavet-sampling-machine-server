@@ -70,6 +70,9 @@ class Settings(BaseSettings):
     PICKUP_TIMEOUT_SECONDS: int = Field(60, env="PICKUP_TIMEOUT_SECONDS")
     PICKUP_COOLDOWN_HOURS: float = Field(12, env="PICKUP_COOLDOWN_HOURS")
 
+    # Criptografia dos dados do formulário (RSA+AES no navegador) — opcional, desligada por padrão
+    ENCRYPTION_ENABLED: bool = Field(False, env="ENCRYPTION_ENABLED")
+
     @model_validator(mode="after")
     def check_form_deps(self) -> "Settings":
         if self.USE_FORM:

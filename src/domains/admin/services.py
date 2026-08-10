@@ -119,6 +119,23 @@ class AdminUserService:
 
         return csv_generator()
 
+    async def list_users_raw(self) -> list[dict[str, Any]]:
+        """Retorna nome/email/telefone sem projeção — usados pela página de
+        descriptografia, que pode receber texto cifrado nesses mesmos campos
+        quando ENCRYPTION_ENABLED estiver ativo."""
+        cursor = self.repository.find({}).sort("createdAt", -1)
+        results = []
+        async for doc in cursor:
+            results.append({
+                "id": str(doc["_id"]),
+                "name": doc.get("name", ""),
+                "email": doc.get("email", ""),
+                "phone": doc.get("phone", ""),
+                "created_at": (doc.get("createdAt") or datetime.now(timezone.utc)).isoformat(),
+                "productsPicked": safe_int(doc.get("productsPicked", 0)),
+            })
+        return results
+
     async def get_user(self, user_id: str) -> dict:
         doc = await self.repository.find_by_id(user_id)
         if not doc:

@@ -8,6 +8,12 @@
     <link rel="stylesheet" href="/templates/sample/css/sample-root.css">
     <link rel="stylesheet" href="/templates/sample/css/form.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    {% if encryption_enabled %}
+    <script src="/templates/sample/js/crypt/util.js"></script>
+    <script src="/templates/sample/js/crypt/aes_encryption.js"></script>
+    <script src="/templates/sample/js/crypt/rsa_encryption.js"></script>
+    <script src="/templates/sample/js/crypt/db_encryption.js"></script>
+    {% endif %}
 </head>
 
 <body>
@@ -70,6 +76,7 @@
 
     <script>
         const COLLECTION = 'registrations';
+        const ENCRYPTION_ENABLED = {{ 'true' if encryption_enabled else 'false' }};
 
         function getUrlParameter(name) {
             return new URLSearchParams(window.location.search).get(name);
@@ -195,6 +202,35 @@
         emailInput.addEventListener('input', () => validarCampos(false));
         termosInput.addEventListener('change', () => validarCampos(false));
 
+        async function buildPayload(sessionId) {
+            const nome = nomeInput.value.trim();
+            const celular = celularInput.value.trim();
+            const email = emailInput.value.trim();
+
+            if (!ENCRYPTION_ENABLED) {
+                return { name: nome, email, phone: celular, code: sessionId };
+            }
+
+            const publicKeyResponse = await fetch('/templates/sample/js/crypt/public_key.pem');
+            if (!publicKeyResponse.ok) {
+                throw new Error('Não foi possível carregar a chave pública de criptografia.');
+            }
+            const publicKeyPem = await publicKeyResponse.text();
+
+            const emailHashBuffer = await _digestMessage(email.toLowerCase());
+            const emailHash = _arrayBufferToHexString(emailHashBuffer);
+
+            return {
+                name: nome,
+                code: sessionId,
+                encrypted: true,
+                emailHash,
+                encName: await dbEncryptString(nome, publicKeyPem),
+                encEmail: await dbEncryptString(email, publicKeyPem),
+                encPhone: await dbEncryptString(celular, publicKeyPem),
+            };
+        }
+
         async function tryCreateUser(payload) {
             const res = await fetch(`/api/users/?collection=${COLLECTION}`, {
                 method: 'POST',
@@ -217,14 +253,9 @@
             if (!validarCampos(true)) return;
 
             const sessionId = localStorage.getItem('session_id') || '';
-            const payload = {
-                name: nomeInput.value.trim(),
-                email: emailInput.value.trim(),
-                phone: celularInput.value.trim(),
-                code: sessionId,
-            };
 
             try {
+                const payload = await buildPayload(sessionId);
                 const res = await tryCreateUser(payload);
 
                 if (res.ok) {

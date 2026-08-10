@@ -8,6 +8,7 @@ from fastapi.responses import StreamingResponse
 from starlette.responses import HTMLResponse
 from starlette.templating import Jinja2Templates
 
+from infrastructure.config import settings
 from integrations.logcenter.log_sender import LogSender
 from .repositories import DEFAULT_COLLECTION
 from .security import admin_required
@@ -55,6 +56,13 @@ async def export_users(
     )
 
 
+@router.get("/users/raw", dependencies=[Depends(admin_required)], response_model=Any)
+async def list_users_raw(collection: str = Query(DEFAULT_COLLECTION)) -> Any:
+    """Nome/email/telefone sem projeção — usado pela página de descriptografia
+    (esses campos podem estar cifrados quando ENCRYPTION_ENABLED=true)."""
+    return await service_for(collection).list_users_raw()
+
+
 @router.get("/users/{user_id}", dependencies=[Depends(admin_required)])
 async def get_user(user_id: str = Path(..., title="ID do Usuário"), collection: str = Query(DEFAULT_COLLECTION)):
     return await service_for(collection).get_user(user_id)
@@ -63,6 +71,11 @@ async def get_user(user_id: str = Path(..., title="ID do Usuário"), collection:
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(admin_required)])
 async def delete_user(user_id: str = Path(..., description="ID do Usuário a ser excluído"), collection: str = Query(DEFAULT_COLLECTION)):
     await service_for(collection).delete_user(user_id)
+
+
+@router.get("/encryption-status", dependencies=[Depends(admin_required)])
+async def encryption_status() -> dict:
+    return {"enabled": settings.ENCRYPTION_ENABLED}
 
 
 @router.get("/inventory", response_class=HTMLResponse, dependencies=[Depends(admin_required)])
