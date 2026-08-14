@@ -22,16 +22,26 @@ from .schemas import (
     UserPickupResponse,
     UserUpdateRequest,
 )
-from .repositories import DEFAULT_COLLECTION
+from .repositories import DEFAULT_COLLECTION, AddressRepository
 from .services import (
     PICKUP_BLOCK_COOKIE_NAME,
     SessionService,
     UserService,
     build_pickup_block_cookie_value,
+    is_ip_blocked,
     is_pickup_blocked,
     is_within_business_hours,
+    now_saopaulo,
     now_utc,
 )
+
+
+def _extract_client_ip(request: Request) -> str:
+    return (
+        request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+        or request.headers.get("x-real-ip", "")
+        or (request.client.host if request.client else "unknown")
+    )
 
 _BASE_DIR = Path(__file__).resolve().parents[2]
 templates = Jinja2Templates(directory=str(_BASE_DIR / "static" / "sample" / "html"))
@@ -111,6 +121,19 @@ async def start_static_session(request: Request):
             {"open_hour": settings.SAMPLE_OPEN_HOUR, "close_hour": settings.SAMPLE_CLOSE_HOUR},
         )
 
+    client_ip = _extract_client_ip(request)
+    addr_repo = AddressRepository()
+    addr_doc = await addr_repo.record_access(client_ip, now_saopaulo())
+
+    if is_ip_blocked(addr_doc, now_utc(), settings.PICKUP_COOKIE_BLOCK_HOURS):
+        LogSender().log(
+            "servidor_start_blocked_ip",
+            additional={"ip": client_ip},
+            status="ERROR",
+            tags=["form", "start", "blocked", "ip", "server"],
+        )
+        return templates.TemplateResponse(request, "error.html")
+
     cookie_value = request.cookies.get(PICKUP_BLOCK_COOKIE_NAME)
     if is_pickup_blocked(cookie_value, now_utc(), settings.PICKUP_COOKIE_BLOCK_HOURS):
         LogSender().log(
@@ -139,7 +162,7 @@ async def html_thanks(request: Request):
 
 
 @session_router.get("/session/{sid}", response_model=SessionGetResponse)
-async def get_session_info(sid: str, response: Response):
+async def get_session_info(sid: str, response: Response, request: Request):
     info = await SessionService().get_session_info(sid)
     if info.status == "completed" and info.mode == "qrcode_static":
         response.set_cookie(
@@ -151,6 +174,8 @@ async def get_session_info(sid: str, response: Response):
             secure=settings.ENV != "dev",
             path="/api/sample",
         )
+        client_ip = _extract_client_ip(request)
+        await AddressRepository().record_pickup(client_ip, sid, now_saopaulo())
     return info
 
 

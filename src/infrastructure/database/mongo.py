@@ -17,3 +17,4 @@ async def get_db():
 
 async def init_db():
     await db.registrations.create_index("createdAt")
+    await db.addresses.create_index("last_pickup_at")

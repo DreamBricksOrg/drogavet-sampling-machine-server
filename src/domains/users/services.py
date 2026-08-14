@@ -38,11 +38,25 @@ def now_utc() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def now_saopaulo() -> datetime:
+    return datetime.now(ZoneInfo("America/Sao_Paulo"))
+
+
 PICKUP_BLOCK_COOKIE_NAME = "sample_pickup_block"
 
 
 def build_pickup_block_cookie_value(session_id: str, now: datetime) -> str:
     return f"{session_id}:{int(now.timestamp())}"
+
+
+def is_ip_blocked(doc: dict | None, now: datetime, hours: float) -> bool:
+    if not doc:
+        return False
+    last_pickup_at = doc.get("last_pickup_at")
+    if not last_pickup_at:
+        return False
+    elapsed_seconds = (now - as_utc(last_pickup_at)).total_seconds()
+    return 0 <= elapsed_seconds < hours * 3600
 
 
 def is_pickup_blocked(cookie_value: str | None, now: datetime, hours: float) -> bool:

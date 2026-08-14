@@ -1,9 +1,12 @@
+from datetime import datetime
+
 from pymongo import ReadPreference, ReturnDocument
 
 from infrastructure.database.mongo import db
 
 DEFAULT_COLLECTION = "machine"
 SESSIONS_COLLECTION = "sample_sessions"
+ADDRESSES_COLLECTION = "addresses"
 
 
 class SessionRepository:
@@ -112,3 +115,34 @@ class UserRepository:
             {"status": "registered", "canPickFrom": {"$lte": today}},
             {"$set": {"status": "eligible", "updatedAt": updated_at}},
         )
+
+
+class AddressRepository:
+    def __init__(self):
+        self.collection = db[ADDRESSES_COLLECTION]
+
+    async def record_access(self, ip: str, now_sp: datetime) -> dict | None:
+        return await self.collection.find_one_and_update(
+            {"_id": ip},
+            {
+                "$setOnInsert": {"first_access_at": now_sp},
+                "$set": {"last_access_at": now_sp},
+                "$push": {"accesses": {"at": now_sp}},
+            },
+            upsert=True,
+            return_document=ReturnDocument.AFTER,
+        )
+
+    async def record_pickup(self, ip: str, session_id: str, now_sp: datetime) -> None:
+        await self.collection.update_one(
+            {"_id": ip},
+            {
+                "$setOnInsert": {"first_access_at": now_sp},
+                "$set": {"last_pickup_at": now_sp},
+                "$push": {"pickups": {"at": now_sp, "session_id": session_id}},
+            },
+            upsert=True,
+        )
+
+    async def find(self, ip: str) -> dict | None:
+        return await self.collection.find_one({"_id": ip})
